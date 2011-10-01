@@ -34,13 +34,13 @@
             this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
             this.notifyIcon.Text = "DiskLoadMonitor";
             this.notifyIcon.Visible = true;
-            this.notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon_MouseDoubleClick);
+            this.notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.NotifyIconMouseDoubleClick);
             // 
             // updateTimer
             // 
             this.updateTimer.Enabled = true;
             this.updateTimer.Interval = 1000;
-            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
+            this.updateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
             // 
             // Form1
             // 
