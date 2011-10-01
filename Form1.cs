@@ -11,29 +11,24 @@ namespace DiskLoadMonitor {
             InitializeComponent();
 
             for(int i=0; i<16; i++) {
-                //data.Add(0);
-                readData.Add(0);
-                writeData.Add(0);
+                ReadData.Add(0);
+                WriteData.Add(0);
             }
 
-            bitmap = new Bitmap(size, size);
-            // graphics = Graphics.FromImage(bitmap);
+            Bitmap = new Bitmap(HistorySize, HistorySize);
         }
 
-        //private readonly List<int> data = new List<int>();
-        private readonly List<int> readData = new List<int>();
-        private readonly List<int> writeData = new List<int>();
-        // private readonly PerformanceCounter counter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total");
-        private readonly PerformanceCounter readCounter = new PerformanceCounter("PhysicalDisk", "% Disk Read Time", "_Total");
-        private readonly PerformanceCounter writeCounter = new PerformanceCounter("PhysicalDisk", "% Disk Write Time", "_Total");
-        const int size = 16;
-        private readonly Bitmap bitmap;
-        // private readonly Graphics graphics;
+        private readonly List<int> ReadData = new List<int>();
+        private readonly List<int> WriteData = new List<int>();
+        private readonly PerformanceCounter ReadCounter = new PerformanceCounter("PhysicalDisk", "% Disk Read Time", "_Total");
+        private readonly PerformanceCounter WriteCounter = new PerformanceCounter("PhysicalDisk", "% Disk Write Time", "_Total");
+        const int HistorySize = 16;
+        private readonly Bitmap Bitmap;
 
-        private void updateTimer_Tick(object sender, EventArgs e) {
-            // Opdater data (man kunne overveje at bruge noget kø-agtigt)
-            float readDataPoint = OpdaterData(readCounter, readData);
-            float writeDataPoint = OpdaterData(writeCounter, writeData);
+        private void UpdateTimerTick(object sender, EventArgs e) {
+            // Update data
+            float readDataPoint = UpdateData(ReadCounter, ReadData);
+            float writeDataPoint = UpdateData(WriteCounter, WriteData);
 
             string tooltipText =
                        "Disk Time: " + Math.Round(readDataPoint+writeDataPoint, 0) + "%\n"+
@@ -41,41 +36,29 @@ namespace DiskLoadMonitor {
                        "Disk Write Time: "+Math.Round(writeDataPoint, 0)+"%";
             notifyIcon.Text = LimitText(63, tooltipText);
 
-            
-            // Tegn pixels på bitmappen
-            for (int i = 0; i < size; i++) {
-                int rd = readData[i];
-                int wd = writeData[i];
+            // Draw pixels on the bitmap
+            for (int i = 0; i < HistorySize; i++) {
+                int rd = ReadData[i];
+                int wd = WriteData[i];
                 int md = Math.Max(rd, wd);
-                for (int j = 0; j < size; j++) {
+                for (int j = 0; j < HistorySize; j++) {
                     Color color;
                     if (j >= md) color = Color.Black;
                     else if (j < rd && j < wd) color = Color.Yellow;
                     else if (j < rd) color = Color.Lime;
                     else if (j < wd) color = Color.Red;
                     else throw new Exception("Burde ikke ske: " + j + ", " + rd + ", " + md);
-                    bitmap.SetPixel(i, HeightToY(j), color);
+                    Bitmap.SetPixel(i, HeightToY(j), color);
                 }
             }
-            //// Tegn linjer på bitmappen via graphics-objektet, der tegner på bitmappen
-            //for (int i = 0; i < size - 1; i++) {
-            //    int d1 = data[i];
-            //    int d2 = data[i + 1];
-            //    graphics.DrawLine(Pens.LightGreen, i, HeightToY(d1), i + 1, HeightToY(d2));
-            //}
-            //graphics.Flush(); // Sørg for at graphics får tegnet alt ned på bitmappen
 
-            // Lav et smukt icon ud fra bitmap
-            //IntPtr hicon = bitmap.GetHicon();
-            //Icon icon = Icon.FromHandle(hicon);
+            // Create an icon the the bitmap
+            Icon icon = Icon.FromHandle(Bitmap.GetHicon());
 
-            Icon icon = Icon.FromHandle(bitmap.GetHicon());
-
-            // Frigiv det gamle icon
+            // Release the old icon
             NativeMethods.DestroyIcon(notifyIcon.Icon.Handle);
-            // notifyIcon.Icon.Dispose();
 
-            // Sæt det nye icon
+            // Set the new icon
             notifyIcon.Icon = icon;
         }
 
@@ -84,19 +67,20 @@ namespace DiskLoadMonitor {
             return s.Substring(0, maxLength);
         }
 
-        private static float OpdaterData(PerformanceCounter counter, IList<int> data) {
+        private static float UpdateData(PerformanceCounter counter, IList<int> data) {
+            // May do: Use the list as a cyclic buffer instead (with 16 entries it probably doesn't matter much)
             data.RemoveAt(0);
             float dataPoint = counter.NextValue();
-            int pixelHeight = (int)(dataPoint / 100 * size);
+            int pixelHeight = (int)(dataPoint / 100 * HistorySize);
             data.Add(pixelHeight);
             return dataPoint;
         }
 
         private static int HeightToY(int j) {
-            return size-1-j;
+            return HistorySize-1-j;
         }
 
-        private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e) {
+        private void NotifyIconMouseDoubleClick(object sender, MouseEventArgs e) {
             Application.Exit();
         }
 
