@@ -2,6 +2,8 @@ Purpose: Shows a tray icon with disk queue length history in Windows.
 
 Initially developed by Niels Teglsbo Jensen in personal time
 
+To exit: Double click the tray icon.
+
 Known problem(s):
 * Must be run as administrator in Windows 2008 R2. Otherwise it will eat massive amounts of CPU cycles.
 
